@@ -8,15 +8,19 @@ import {
   DeviceDispatchable,
   Dispatchable,
 } from '@iotes/core'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+type UseIotesHost = (
+  selector?: string[],
+) => [State, (dispatchabe: HostDispatchable) => void]
+
+type UseIotesDevice = <Payload>(
+  selector?: string[],
+) => [State, (dispatchable: DeviceDispatchable<Payload>) => void]
 
 export type IotesReactHooks = {
-  useIotesHost: (
-    selector?: string[],
-  ) => [any, (dispatchabe: HostDispatchable) => void]
-  useIotesDevice: <Payload>(
-    selector?: string[],
-  ) => [any, (dispatchable: DeviceDispatchable<Payload>) => void]
+  useIotesHost: UseIotesHost,
+  useIotesDevice: UseIotesDevice,
 }
 
 export const createIotesReactHooks = (
@@ -38,7 +42,11 @@ export const createIotesReactHooks = (
     ) => void] => {
     const [state, setState] = useState({})
 
-    subscribe((s: { [key: string]: unknown }) => setState(s), null)
+    useEffect(() => {
+      subscribe((iotesState: State) => {
+        setState(iotesState)
+      }, selector)
+    }, [])
 
     return [state, dispatch]
   }
