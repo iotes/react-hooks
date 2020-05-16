@@ -2,7 +2,7 @@ import { create, act } from 'react-test-renderer'
 import React, { FC, useState } from 'react'
 import { TopologyMap, createDeviceDispatchable } from '@iotes/core'
 import { createLocalStoreAndStrategy } from './utils/strategies/local'
-import { createIotesReactHooks } from '../src/index'
+import { createIotes } from '../src/index'
 
 const el = React.createElement
 
@@ -40,7 +40,7 @@ describe('React Hooks ', () => {
   // Set up
   beforeEach(() => {
     [localStore, createLocalStrategy] = createLocalStoreAndStrategy()
-    const { useIotesHost, useIotesDevice } = createIotesReactHooks(
+    const { useIotesHost, useIotesDevice } = createIotes(
       testTopologoy,
       createLocalStrategy,
     )

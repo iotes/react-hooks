@@ -37,7 +37,7 @@ export const createIotes = (
     subscribe: any,
     dispatch: (state: State) => void,
     selector?: Selector,
-  ): [any, (
+  ): [State, (
       dispatchable: Dispatchable
     ) => void] => {
     const isHookSubscribed = useRef(false)
