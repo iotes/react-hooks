@@ -1,5 +1,5 @@
 import {
-  createIotes,
+  createIotes as createIotesCore,
   Strategy,
   TopologyMap,
   Selector,
@@ -8,7 +8,7 @@ import {
   DeviceDispatchable,
   Dispatchable,
 } from '@iotes/core'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 type UseIotesHost = (
   selector?: string[],
@@ -23,11 +23,11 @@ export type IotesReactHooks = {
   useIotesDevice: UseIotesDevice,
 }
 
-export const createIotesReactHooks = (
+export const createIotes = (
   topology: TopologyMap<any, any>,
   strategy: Strategy<any, any>,
 ): IotesReactHooks => {
-  const iotes = createIotes({ topology, strategy })
+  const iotes = createIotesCore({ topology, strategy })
 
   const {
     hostDispatch, deviceDispatch, hostSubscribe, deviceSubscribe,
@@ -40,13 +40,17 @@ export const createIotesReactHooks = (
   ): [any, (
       dispatchable: Dispatchable
     ) => void] => {
+    const isHookSubscribed = useRef(false)
     const [state, setState] = useState({})
 
     useEffect(() => {
-      subscribe((iotesState: State) => {
-        setState(iotesState)
-      }, selector)
-    }, [])
+      if (isHookSubscribed.current === false) {
+        subscribe((iotesState: State) => {
+          setState(iotesState)
+        }, selector)
+        isHookSubscribed.current = true
+      }
+    }, [isHookSubscribed.current, state])
 
     return [state, dispatch]
   }
