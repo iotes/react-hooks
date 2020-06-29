@@ -60,6 +60,7 @@ describe('React Hooks ', () => {
 
   afterEach(() => {
     iotesReactHooks = null
+
     console.error = oe
   })
 
