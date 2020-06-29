@@ -1,6 +1,6 @@
 {
   "name": "@iotes/react-hooks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The iotes plugin for react hooks",
   "repository": "git://github.com/iotes/react-hooks.git",
   "homepage": "https://iotes.dev/docs/plugins/react-hooks",
