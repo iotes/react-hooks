@@ -14,8 +14,7 @@
     "test": "jest ./__tests__/*.test.ts --forceExit"
   },
   "peerDependencies": {
-    "react": "^16.13.1",
-    "@iotes/core": "^0.1.34"
+    "react": "^16.13.1"
   },
   "dependencies": {
     "@iotes/core": "^0.2.9"
