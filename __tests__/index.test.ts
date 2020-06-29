@@ -1,59 +1,51 @@
+import React, { FC, useState, useEffect } from 'react'
 import { create, act } from 'react-test-renderer'
-import React, { FC, useState } from 'react'
-import { TopologyMap, createDeviceDispatchable } from '@iotes/core'
-import { createLocalStoreAndStrategy } from './utils/strategies/local'
-import { createIotes } from '../src/index'
+
+import {
+  createDeviceDispatchable,
+  Store,
+  Strategy,
+} from '@iotes/core'
+
+import {
+  StrategyConfig,
+  DeviceTypes,
+  createTestStrategy,
+  config,
+  wait,
+} from '@iotes/strategy-test'
+
+import { createIotes, IotesReactHooks } from '../src/index'
+
+// MODULE
+let remote: Store
+let strategy: Strategy<StrategyConfig, DeviceTypes>
+let iotesReactHooks: IotesReactHooks
 
 const el = React.createElement
-
-// Test data
-const testTopologoy: TopologyMap<{}, 'RFID_READER' | 'ROTARY_ENCODER'> = {
-  hosts: [{ name: 'testapp/0', host: 'localhost', port: '8888' }],
-  client: { name: 'client' },
-  devices: [
-    {
-      hostName: 'testapp/0',
-      type: 'RFID_READER',
-      name: 'READER/1',
-      channel: 1,
-    },
-    {
-      hostName: 'testapp/0',
-      type: 'ROTARY_ENCODER',
-      name: 'ENCODER/1',
-      channel: 2,
-    },
-  ],
-}
-
-let iotes: any
-let localStore: any
-let createLocalStrategy: any
-let TestRender: any
 let testRoot: any
 let TestComponent: FC
-let testBroker: any
-let testClient: any
+let currentDeviceVal: {[key: string]: any} = {}
+
 const oe = console.error
 
 describe('React Hooks ', () => {
-  // Set up
+  // SET UP
   beforeEach(() => {
-    [localStore, createLocalStrategy] = createLocalStoreAndStrategy()
-    const { useIotesHost, useIotesDevice } = createIotes(
-      testTopologoy,
-      createLocalStrategy,
-    )
+    [remote, strategy] = createTestStrategy()
+    iotesReactHooks = createIotes({
+      topology: config.topology,
+      strategy,
+    })
 
     TestComponent = () => {
       const [isSent, setIsSent] = useState(false)
-      const [deviceVal, setDeviceVal] = useIotesDevice()
-      const [hostVal, setHostVal] = useIotesHost()
+      const [deviceVal, setDeviceVal] = iotesReactHooks.useIotesDevice()
+      const [hostVal, setHostVal] = iotesReactHooks.useIotesHost()
 
-      if (!isSent) {
-        setDeviceVal(createDeviceDispatchable('DEVICE', 'TEST', { message: 'test' }))
-        setIsSent(true)
-      }
+      useEffect(() => {
+        currentDeviceVal = deviceVal
+      }, [deviceVal])
 
       return el(React.Fragment, null, [
         el('div', { key: 0 }, `${JSON.stringify(hostVal)}`),
@@ -67,7 +59,7 @@ describe('React Hooks ', () => {
   })
 
   afterEach(() => {
-    localStore = null
+    iotesReactHooks = null
     console.error = oe
   })
 
@@ -75,7 +67,7 @@ describe('React Hooks ', () => {
   test('Can intergrate with react hooks and receive host updates ', async () => {
     expect(testRoot.toJSON()).not.toBe(null)
 
-    const { hosts } = testTopologoy
+    const { hosts } = config.topology
 
     // Surpress console errors to stop act errors logging as state
     // update within iotes cannot use act method from test tenderer
@@ -93,47 +85,33 @@ describe('React Hooks ', () => {
   test('Can intergrate with react hooks and receive device updates ', async () => {
     expect(testRoot.toJSON()).not.toBe(null)
 
-    const { devices } = testTopologoy
-
     // Surpress console errors to stop act errors logging as
-    // state update within iotes cannot use act method from test tenderer
+    // state update within iotes cannot use act method from test renderer
     console.error = jest.fn()
 
-    const newComponent: any = await new Promise((res) => {
-      setTimeout(() => res(testRoot.toJSON()), 50)
-    })
+    remote.dispatch(createDeviceDispatchable('DEVICE_ONE', 'UPDATE', { signal: 'test' }))
+    remote.dispatch(createDeviceDispatchable('DEVICE_TWO', 'UPDATE', { signal: 'test' }))
 
-    const newEventFromHook = JSON.parse(newComponent[1].children)
+    await wait()
+    // const newEventFromHook = JSON.parse(newComponent[1].children)
 
     // Dynamically adjust to given test topology
-    expect(
-      Object.keys(newEventFromHook).filter((e) => {
-        // eslint-disable-next-line no-restricted-syntax
-        for (const d of devices) {
-          if (e === d.name) return true
-        }
-
-        return false
-      }).length,
-    ).toEqual(devices.length)
+    expect(Object.keys(currentDeviceVal).length).toEqual(2)
   })
 
   test('Can dispatch with react hooks and receive device updates ', async () => {
     expect(testRoot.toJSON()).not.toBe(null)
 
-    const { devices } = testTopologoy
-
     // Surpress console errors to stop act errors logging as state update
     // within iotes cannot use act method from test tenderer
     console.error = jest.fn()
 
-    const newComponent: any = await new Promise((res) => {
-      setTimeout(() => res(testRoot.toJSON()), 50)
-    })
+    remote.dispatch(createDeviceDispatchable('DEVICE_ONE', 'UPDATE', { signal: 'test' }))
+    remote.dispatch(createDeviceDispatchable('DEVICE_TWO', 'UPDATE', { signal: 'test' }))
 
-    const newEventFromHook = JSON.parse(newComponent[1].children)
+    await wait()
 
-    expect(newEventFromHook).toHaveProperty('DEVICE')
-    expect(newEventFromHook.DEVICE.payload).toStrictEqual({ message: 'test' })
+    expect(currentDeviceVal).toHaveProperty('DEVICE_ONE')
+    expect(currentDeviceVal.DEVICE_ONE.payload).toStrictEqual({ signal: 'test' })
   })
 })

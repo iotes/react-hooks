@@ -7,8 +7,24 @@ import {
   HostDispatchable,
   DeviceDispatchable,
   Dispatchable,
+  Iotes,
+  LogLevel,
+  Logger,
+  IotesHooks,
 } from '@iotes/core'
+
 import { useState, useEffect, useRef } from 'react'
+
+type ReactHooksArgs<StrategyConfig, DeviceTypes extends string> = {
+  topology: TopologyMap<StrategyConfig, DeviceTypes>;
+  strategy: Strategy<StrategyConfig, DeviceTypes>;
+  plugin?: (iotes: Iotes) => any;
+  logLevel?: LogLevel;
+  logger?: Logger;
+  lifecycleHooks?: IotesHooks;
+}
+
+// TYPES
 
 type UseIotesHost = (
   selector?: string[],
@@ -23,10 +39,17 @@ export type IotesReactHooks = {
   useIotesDevice: UseIotesDevice,
 }
 
-export const createIotes = (
-  topology: TopologyMap<any, any>,
-  strategy: Strategy<any, any>,
-): IotesReactHooks => {
+type CreateIotesReactHooks = <StrategyConfig, DeviceTypes extends string>(
+  args:ReactHooksArgs<StrategyConfig, DeviceTypes>
+) => IotesReactHooks
+
+
+// CREATE
+
+export const createIotes: CreateIotesReactHooks = ({
+  topology,
+  strategy,
+}): IotesReactHooks => {
   const iotes = createIotesCore({ topology, strategy })
 
   const {
@@ -39,15 +62,14 @@ export const createIotes = (
     selector?: Selector,
   ): [State, (
       dispatchable: Dispatchable
-    ) => void] => {
+    ) => void
+  ] => {
     const isHookSubscribed = useRef(false)
     const [state, setState] = useState({})
 
     useEffect(() => {
       if (isHookSubscribed.current === false) {
-        subscribe((iotesState: State) => {
-          setState(iotesState)
-        }, selector)
+        subscribe((iotesState: State) => { setState(iotesState) }, selector)
         isHookSubscribed.current = true
       }
     }, [isHookSubscribed.current, state])
