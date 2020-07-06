@@ -23,6 +23,7 @@
     "build/**/*"
   ],
   "devDependencies": {
+    "@iotes/strategy-phidget": "0.0.8",
     "@iotes/strategy-test": "0.0.8",
     "@types/jest": "^25.1.4",
     "@types/node": "^13.7.0",

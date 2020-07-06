@@ -12,6 +12,7 @@ import {
   Logger,
   IotesHooks,
   Middleware,
+  Subscription,
 } from '@iotes/core'
 
 import { useState, useEffect, useRef } from 'react'
@@ -62,7 +63,7 @@ export const createIotes: CreateIotesReactHooks = ({
   } = iotes
 
   const createHook = (
-    subscribe: any,
+    subscribe: typeof deviceSubscribe,
     dispatch: (state: State) => void,
     selector?: Selector,
     middleware: Middleware[] = [],
